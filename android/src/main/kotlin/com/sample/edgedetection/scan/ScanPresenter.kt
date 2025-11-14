@@ -277,23 +277,48 @@ class ScanPresenter constructor(
         Log.i(TAG, "on picture taken")
         Observable.just(p0)
             .subscribeOn(proxySchedule)
-            .subscribe {
-                val pictureSize = p1?.parameters?.pictureSize
-                Log.i(TAG, "picture size: " + pictureSize.toString())
-                val mat = Mat(
-                    Size(
-                        pictureSize?.width?.toDouble() ?: 1920.toDouble(),
-                        pictureSize?.height?.toDouble() ?: 1080.toDouble()
-                    ), CvType.CV_8U
-                )
-                mat.put(0, 0, p0)
-                val pic = Imgcodecs.imdecode(mat, Imgcodecs.IMREAD_UNCHANGED)
-                Core.rotate(pic, pic, Core.ROTATE_90_CLOCKWISE)
-                mat.release()
-                detectEdge(pic)
+            .subscribe({ bytes ->
+                try {
+                    if (bytes == null || bytes.isEmpty()) {
+                        Log.e(TAG, "onPictureTaken: empty image bytes")
+                        shutted = true
+                        busy = false
+                        return@subscribe
+                    }
+
+                    Log.i(TAG, "onPictureTaken: bytes length = ${bytes.size}")
+                    val pictureSize = p1?.parameters?.pictureSize
+                    Log.i(TAG, "picture size: $pictureSize")
+
+                    // p0 / bytes is already JPEG data from the camera.
+                    // Decode to Bitmap, then to Mat for OpenCV.
+                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (bitmap == null) {
+                        Log.e(TAG, "onPictureTaken: Bitmap decode failed")
+                        shutted = true
+                        busy = false
+                        return@subscribe
+                    }
+
+                    val pic = Mat()
+                    Utils.bitmapToMat(bitmap, pic)
+                    bitmap.recycle()
+
+                    // Keep behaviour consistent with preview
+                    Core.rotate(pic, pic, ROTATE_90_CLOCKWISE)
+
+                    detectEdge(pic)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error while handling captured picture", e)
+                } finally {
+                    shutted = true
+                    busy = false
+                }
+            }, { error ->
+                Log.e(TAG, "Error in onPictureTaken observable", error)
                 shutted = true
                 busy = false
-            }
+            })
     }
 
     override fun onPreviewFrame(p0: ByteArray?, p1: Camera?) {
