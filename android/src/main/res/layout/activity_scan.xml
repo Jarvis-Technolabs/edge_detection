@@ -25,7 +25,7 @@
         android:paddingLeft="15dp"
         android:paddingTop="30dp"
         android:paddingRight="15dp"
-        android:paddingBottom="40dp">
+        android:paddingBottom="60dp">
 
         <ImageView
             android:id="@+id/flash"
