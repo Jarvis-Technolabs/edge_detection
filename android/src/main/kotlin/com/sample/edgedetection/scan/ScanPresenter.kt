@@ -245,17 +245,34 @@ class ScanPresenter constructor(
         }
     }
     fun detectEdge(pic: Mat) {
-        Log.i("height", pic.size().height.toString())
-        Log.i("width", pic.size().width.toString())
-        val resizedMat = matrixResizer(pic)
-        SourceManager.corners = processPicture(resizedMat)
-        Imgproc.cvtColor(resizedMat, resizedMat, Imgproc.COLOR_RGB2BGRA)
-        SourceManager.pic = resizedMat
-        val cropIntent = Intent(context, CropActivity::class.java)
-        cropIntent.putExtra(EdgeDetectionHandler.INITIAL_BUNDLE, this.initialBundle)
-        (context as Activity).startActivityForResult(cropIntent, REQUEST_CODE)
+    val resizedMat = matrixResizer(pic)
+
+    // Do your edge detection on a processing copy if needed
+    SourceManager.corners = processPicture(resizedMat)
+
+    // ✅ Normalize to RGBA for display (NO blue/orange swap)
+    when (resizedMat.channels()) {
+        4 -> {
+            // Could be RGBA or BGRA depending on source.
+            // If your source is from bitmapToMat => RGBA already, do nothing.
+            // If your source is from imdecode => likely BGRA, convert it:
+            // Imgproc.cvtColor(resizedMat, resizedMat, Imgproc.COLOR_BGRA2RGBA)
+        }
+        3 -> {
+            // imdecode(IMREAD_COLOR) => BGR
+            Imgproc.cvtColor(resizedMat, resizedMat, Imgproc.COLOR_BGR2RGBA)
+        }
+        1 -> {
+            Imgproc.cvtColor(resizedMat, resizedMat, Imgproc.COLOR_GRAY2RGBA)
+        }
     }
 
+    SourceManager.pic = resizedMat
+
+    val cropIntent = Intent(context, CropActivity::class.java)
+    cropIntent.putExtra(EdgeDetectionHandler.INITIAL_BUNDLE, this.initialBundle)
+    (context as Activity).startActivityForResult(cropIntent, REQUEST_CODE)
+}
     override fun surfaceCreated(p0: SurfaceHolder) {
         initCamera()
     }
