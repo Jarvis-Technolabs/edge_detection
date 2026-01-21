@@ -1,4 +1,4 @@
-package com.sample.edgedetection.scan
+    package com.sample.edgedetection.scan
 
 import android.app.Activity
 import android.content.Intent
@@ -193,10 +193,10 @@ class ScanActivity : BaseActivity(), IScanView.Proxy {
                 }
             }
 
-            val inputData: ByteArray? = getBytes(contentResolver.openInputStream(imageUri)!!)
-           val inputData = getBytes(contentResolver.openInputStream(imageUri)!!)!!
-            val mob = MatOfByte(*inputData)
-            val pic = Imgcodecs.imdecode(mob, Imgcodecs.IMREAD_COLOR) // BGR (stable)
+           val bytes: ByteArray = getBytes(contentResolver.openInputStream(imageUri)!!) ?: return
+
+            val mob = org.opencv.core.MatOfByte(*bytes)
+            val pic = Imgcodecs.imdecode(mob, Imgcodecs.IMREAD_COLOR)
             mob.release()
 
             if (rotation > -1) Core.rotate(pic, pic, rotation)
