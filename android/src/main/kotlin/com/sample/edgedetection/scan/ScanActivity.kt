@@ -193,12 +193,16 @@ class ScanActivity : BaseActivity(), IScanView.Proxy {
             }
 
             val inputData: ByteArray? = getBytes(contentResolver.openInputStream(imageUri)!!)
-            val mat = Mat(Size(imageWidth, imageHeight), CvType.CV_8U)
-            mat.put(0, 0, inputData)
-            val pic = Imgcodecs.imdecode(mat, Imgcodecs.IMREAD_UNCHANGED)
-            if (rotation > -1) Core.rotate(pic, pic, rotation)
-            mat.release()
+           val inputData = getBytes(contentResolver.openInputStream(imageUri)!!)!!
+            val mob = MatOfByte(*inputData)
+            val pic = Imgcodecs.imdecode(mob, Imgcodecs.IMREAD_COLOR) // BGR (stable)
+            mob.release()
 
+            if (rotation > -1) Core.rotate(pic, pic, rotation)
+            
+            // Optionally convert to RGBA for display later in detectEdge()
+            // Imgproc.cvtColor(pic, pic, Imgproc.COLOR_BGR2RGBA)
+            
             mPresenter.detectEdge(pic)
         } catch (error: Exception) {
             val intent = Intent()
