@@ -25,6 +25,7 @@ import org.opencv.core.Mat
 import org.opencv.core.Size
 import org.opencv.imgcodecs.Imgcodecs
 import java.io.*
+import org.opencv.core.MatOfByte
 
 class ScanActivity : BaseActivity(), IScanView.Proxy {
 
